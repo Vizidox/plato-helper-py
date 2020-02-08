@@ -83,7 +83,6 @@ class TemplatingAPI:
                 "scope": self.auth_scope
             }
 
-
             response = requests.post(self.auth_server_url,
                                      headers=headers,
                                      data=payload)
@@ -117,7 +116,7 @@ class TemplatingAPI:
                                 headers=self.header
                                 )
 
-        if response.status_code is not HTTPStatus.OK:
+        if response.status_code != HTTPStatus.OK:
             raise TemplatingError(response.status_code, response.text)
 
         templates = [TemplateInfo(**template_dict) for template_dict in response.json()]
@@ -131,7 +130,7 @@ class TemplatingAPI:
                                 headers=self.header
                                 )
 
-        if response.status_code is not HTTPStatus.OK:
+        if response.status_code != HTTPStatus.OK:
             raise TemplatingError(response.status_code, response.text)
 
         template = TemplateInfo(**response.json())
@@ -141,12 +140,12 @@ class TemplatingAPI:
     @catch_connection_error
     def compose(self, template_id: str, compose_data: dict, composed_file_target: str):
 
-        response = requests.post(f"{self.templating_server_url}/templates/{template_id}",
+        response = requests.post(f"{self.templating_server_url}/template/{template_id}/compose",
                                  headers=self.json_header,
                                  json=compose_data
                                  )
 
-        if response.status_code is not HTTPStatus.CREATED:
+        if response.status_code != HTTPStatus.CREATED:
             raise TemplatingError(response.status_code, response.text)
 
         with open(composed_file_target, mode='wb') as output:
