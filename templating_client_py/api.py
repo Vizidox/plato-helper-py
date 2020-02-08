@@ -52,10 +52,17 @@ class TemplateInfo(NamedTuple):
 
 class TemplatingAPI:
 
-    def __init__(self, auth_server_url: str, templating_server_url: str,
-                 templating_client_id: str, templating_client_secret: str):
-        self.templating_client_id = templating_client_id
-        self.templating_client_secret = templating_client_secret
+    def __init__(
+            self,
+            auth_server_url: str,
+            auth_scope: str,
+            auth_id: str,
+            auth_secret: str,
+            templating_server_url: str
+    ):
+        self.auth_id = auth_id
+        self.auth_secret = auth_secret
+        self.auth_scope = auth_scope
         self.auth_server_url = auth_server_url
         self.templating_server_url = templating_server_url
         self._token = None
@@ -70,9 +77,10 @@ class TemplatingAPI:
             }
 
             payload = {
-                "client_id": self.templating_client_id,
-                "client_secret": self.templating_client_secret,
-                "grant_type": "client_credentials"
+                "client_id": self.auth_id,
+                "client_secret": self.auth_secret,
+                "grant_type": "client_credentials",
+                "scope": self.auth_scope
             }
 
 
