@@ -8,6 +8,8 @@ import requests
 class AuthenticationError(Exception): ...
 
 
+class TemplatingUnavailable(Exception): ...
+
 class TemplatingAPI:
 
     def __init__(self, auth_server_url: str, templating_client_id: str, templating_client_secret: str):
@@ -31,12 +33,15 @@ class TemplatingAPI:
                 "grant_type": "client_credentials"
             }
 
-            response = requests.post(self.auth_server_url,
-                                     headers=headers,
-                                     data=payload)
-
+            try:
+                response = requests.post(self.auth_server_url,
+                                         headers=headers,
+                                         data=payload)
+            except ConnectionError as e:
+                raise TemplatingUnavailable(e)
+            
             if response.status_code != HTTPStatus.OK:
-                raise AuthenticationError(response.status_code)
+                raise AuthenticationError(response.status_code, response.text)
 
             json_response = response.json()
             self._token = str(json_response['access_token'])
