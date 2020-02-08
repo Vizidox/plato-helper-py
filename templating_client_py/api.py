@@ -1,6 +1,7 @@
 import time
 from functools import wraps
 from http import HTTPStatus
+from typing import NamedTuple, Sequence
 
 import requests
 
@@ -10,12 +11,53 @@ class AuthenticationError(Exception): ...
 
 class TemplatingUnavailable(Exception): ...
 
+
+class TemplatingError(Exception): ...
+
+
+def catch_connection_error(f):
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except ConnectionError as e:
+            raise TemplatingUnavailable(e)
+    return wrapper
+
+
+class TemplateInfo(NamedTuple):
+    """
+    Template
+    ---
+    properties:
+        template_id:
+            type: string
+            description: template id
+        template_schema:
+            type: object
+            description: jsonschema for template
+        type:
+            type: string
+            description: template MIME type
+        metadata:
+            type: object
+            description: a collection on property values defined by the resource owner at the template conception
+    """
+    template_id: str
+    template_schema: dict
+    type: str
+    metadata: dict
+
+
 class TemplatingAPI:
 
-    def __init__(self, auth_server_url: str, templating_client_id: str, templating_client_secret: str):
+    def __init__(self, auth_server_url: str, templating_server_url: str,
+                 templating_client_id: str, templating_client_secret: str):
         self.templating_client_id = templating_client_id
         self.templating_client_secret = templating_client_secret
         self.auth_server_url = auth_server_url
+        self.templating_server_url = templating_server_url
         self._token = None
         self._token_expiration_date = None
 
@@ -33,13 +75,11 @@ class TemplatingAPI:
                 "grant_type": "client_credentials"
             }
 
-            try:
-                response = requests.post(self.auth_server_url,
-                                         headers=headers,
-                                         data=payload)
-            except ConnectionError as e:
-                raise TemplatingUnavailable(e)
-            
+
+            response = requests.post(self.auth_server_url,
+                                     headers=headers,
+                                     data=payload)
+
             if response.status_code != HTTPStatus.OK:
                 raise AuthenticationError(response.status_code, response.text)
 
@@ -61,3 +101,45 @@ class TemplatingAPI:
         header = self.header
         header["Content-Type"] = "application/json"
         return header
+
+    @catch_connection_error
+    def templates(self) -> Sequence[TemplateInfo]:
+
+        response = requests.get(f"{self.templating_server_url}/templates/",
+                                headers=self.header
+                                )
+
+        if response.status_code is not HTTPStatus.OK:
+            raise TemplatingError(response.status_code, response.text)
+
+        templates = [TemplateInfo(**template_dict) for template_dict in response.json()]
+
+        return templates
+
+    @catch_connection_error
+    def template(self, template_id: str) -> TemplateInfo:
+
+        response = requests.get(f"{self.templating_server_url}/templates/{template_id}",
+                                headers=self.header
+                                )
+
+        if response.status_code is not HTTPStatus.OK:
+            raise TemplatingError(response.status_code, response.text)
+
+        template = TemplateInfo(**response.json())
+
+        return template
+
+    @catch_connection_error
+    def compose(self, template_id: str, compose_data: dict, composed_file_target: str):
+
+        response = requests.post(f"{self.templating_server_url}/templates/{template_id}",
+                                 headers=self.json_header,
+                                 json=compose_data
+                                 )
+
+        if response.status_code is not HTTPStatus.CREATED:
+            raise TemplatingError(response.status_code, response.text)
+
+        with open(composed_file_target, mode='wb') as output:
+            output.write(response.content)
