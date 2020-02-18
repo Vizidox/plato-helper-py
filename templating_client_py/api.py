@@ -22,7 +22,7 @@ class TemplatingUnavailable(Exception):
 
 class TemplatingError(Exception):
     """
-    TError to be raised when the API responds but not as expected.
+    Error to be raised when the API responds but not as expected.
     """
     ...
 
