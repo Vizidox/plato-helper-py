@@ -28,7 +28,9 @@ class TemplatingError(Exception):
 
 
 def catch_connection_error(f):
-
+    """
+    Simple decorator to catch when the connection for templating service fails and raises a TemplatingUnavailable.
+    """
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
