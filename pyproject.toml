@@ -5,7 +5,7 @@ description = "Client for templating microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.3"
 
 requests="2.22.0"
 
