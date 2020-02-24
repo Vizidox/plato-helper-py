@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "templating-client-py"
 version = "0.1.0"
-description = ""
+description = "Client for templating microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
 
 [tool.poetry.dependencies]
