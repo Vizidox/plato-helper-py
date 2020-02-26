@@ -196,9 +196,9 @@ class TemplatingClient:
         return template
 
     @catch_connection_error
-    def compose(self, template_id: str, compose_data: dict) -> IO:
+    def compose(self, template_id: str, compose_data: dict) -> bytes:
         """
-        Makes a request for the template to be composed and returns the IO
+        Makes a request for the template to be composed and returns the bytes for the file
         :param template_id: the template id
         :param compose_data: dict to compose template with
         """
@@ -210,7 +210,7 @@ class TemplatingClient:
         if response.status_code != HTTPStatus.CREATED:
             raise TemplatingError(response.status_code, response.text)
 
-        return io.BytesIO(response.content)
+        return response.content
 
     def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str):
         """
@@ -219,7 +219,7 @@ class TemplatingClient:
         :param compose_data:
         :param composed_file_target:
         """
-        composed_content: IO = self.compose(template_id, compose_data)
+        composed_content = self.compose(template_id, compose_data)
 
         with open(composed_file_target, mode='wb') as output:
-            output.write(composed_content.read())
+            output.write(composed_content)
