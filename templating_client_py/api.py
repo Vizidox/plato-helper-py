@@ -1,7 +1,8 @@
+import io
 import time
 from functools import wraps
 from http import HTTPStatus
-from typing import NamedTuple, Sequence, Dict
+from typing import NamedTuple, Sequence, Dict, List, IO
 
 import requests
 
@@ -57,11 +58,16 @@ class TemplateInfo(NamedTuple):
         metadata:
             type: object
             description: a collection on property values defined by the resource owner at the template conception
+        tags:
+            type: array
+            items:
+                type: string
     """
     template_id: str
     template_schema: dict
     type: str
     metadata: dict
+    tags: List[str]
 
 
 class TemplatingClient:
@@ -147,13 +153,21 @@ class TemplatingClient:
         return header
 
     @catch_connection_error
-    def templates(self) -> Sequence[TemplateInfo]:
+    def templates(self, tags: List[str]) -> Sequence[TemplateInfo]:
         """
         Retrieves your templates from the API.
+        :param tags: tags to filter the templates by
         :return: Sequence[TemplateInfo] on all the templates available
         """
+
+        params = dict()
+
+        if tags:
+            params["tags"] = tags
+
         response = requests.get(f"{self.templating_server_url}/templates/",
-                                headers=self.header
+                                headers=self.header,
+                                params=params
                                 )
 
         if response.status_code != HTTPStatus.OK:
@@ -182,12 +196,11 @@ class TemplatingClient:
         return template
 
     @catch_connection_error
-    def compose(self, template_id: str, compose_data: dict, composed_file_target: str):
+    def compose(self, template_id: str, compose_data: dict) -> bytes:
         """
-        Makes a request for the
+        Makes a request for the template to be composed and returns the bytes for the file
         :param template_id: the template id
         :param compose_data: dict to compose template with
-        :param composed_file_target: where to store the composed file
         """
         response = requests.post(f"{self.templating_server_url}/template/{template_id}/compose",
                                  headers=self.json_header,
@@ -197,5 +210,16 @@ class TemplatingClient:
         if response.status_code != HTTPStatus.CREATED:
             raise TemplatingError(response.status_code, response.text)
 
+        return response.content
+
+    def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str):
+        """
+        Makes a request for the template to be composed and writes the result to a file.
+        :param template_id:
+        :param compose_data:
+        :param composed_file_target:
+        """
+        composed_content = self.compose(template_id, compose_data)
+
         with open(composed_file_target, mode='wb') as output:
-            output.write(response.content)
+            output.write(composed_content)
