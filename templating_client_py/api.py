@@ -1,7 +1,8 @@
+import io
 import time
 from functools import wraps
 from http import HTTPStatus
-from typing import NamedTuple, Sequence, Dict, List
+from typing import NamedTuple, Sequence, Dict, List, Optional, IO
 
 import requests
 
@@ -195,7 +196,7 @@ class TemplatingClient:
         return template
 
     @catch_connection_error
-    def compose(self, template_id: str, compose_data: dict, composed_file_target: str):
+    def compose(self, template_id: str, compose_data: dict, composed_file_target: Optional[str] = None) -> IO:
         """
         Makes a request for the
         :param template_id: the template id
@@ -210,5 +211,9 @@ class TemplatingClient:
         if response.status_code != HTTPStatus.CREATED:
             raise TemplatingError(response.status_code, response.text)
 
-        with open(composed_file_target, mode='wb') as output:
-            output.write(response.content)
+        if composed_file_target is not None:
+            with open(composed_file_target, mode='wb') as output:
+                output.write(response.content)
+            return open(composed_file_target, mode='r')
+        else:
+            return io.BytesIO(response.content)
