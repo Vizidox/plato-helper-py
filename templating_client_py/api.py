@@ -219,7 +219,7 @@ class TemplatingClient:
                                  params=query_params
                                  )
 
-        if response.status_code != HTTPStatus.CREATED:
+        if response.status_code != HTTPStatus.OK:
             raise TemplatingError(response.status_code, response.text)
 
         return response.content
@@ -244,7 +244,7 @@ class TemplatingClient:
                                 params=query_params
                                 )
 
-        if response.status_code != HTTPStatus.CREATED:
+        if response.status_code != HTTPStatus.OK:
             raise TemplatingError(response.status_code, response.text)
 
         return response.content
