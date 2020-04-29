@@ -252,9 +252,10 @@ class TemplatingClient:
     def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str, *args, **kwargs):
         """
         Makes a request for the template to be composed and writes the result to a file.
-        :param template_id:
-        :param compose_data:
-        :param composed_file_target:
+        :param template_id: the template id
+        :param compose_data: dict to compose template with
+        :param args: extra arguments to send to compose
+        :param kwargs: extra keyword arguments to send to compose
         """
         composed_content = self.compose(template_id, compose_data, *args, **kwargs)
 
