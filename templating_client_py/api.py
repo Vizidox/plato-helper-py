@@ -254,6 +254,7 @@ class TemplatingClient:
         Makes a request for the template to be composed and writes the result to a file.
         :param template_id: the template id
         :param compose_data: dict to compose template with
+        :param composed_file_target: path to file to be written. Caution: file is overwritten
         :param args: extra arguments to send to compose
         :param kwargs: extra keyword arguments to send to compose
         """
