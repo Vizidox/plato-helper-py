@@ -249,14 +249,14 @@ class TemplatingClient:
 
         return response.content
 
-    def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str):
+    def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str, *args, **kwargs):
         """
         Makes a request for the template to be composed and writes the result to a file.
         :param template_id:
         :param compose_data:
         :param composed_file_target:
         """
-        composed_content = self.compose(template_id, compose_data)
+        composed_content = self.compose(template_id, compose_data, *args, **kwargs)
 
         with open(composed_file_target, mode='wb') as output:
             output.write(composed_content)
