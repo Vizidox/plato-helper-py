@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "templating-client-py"
-version = "0.1.1"
+version = "0.2.0"
 description = "Client for templating microservice"
-authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
+authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com"]
 
 [tool.poetry.dependencies]
-python = "^3.3"
+python = "^3.7"
 
 requests="2.22.0"
 
