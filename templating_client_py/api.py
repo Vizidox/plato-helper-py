@@ -200,6 +200,7 @@ class TemplatingClient:
     def compose(self, template_id: str,
                 compose_data: dict,
                 mime_type="application/pdf",
+                page: Optional[int] = None,
                 resize_height: Optional[int] = None,
                 resize_width: Optional[int] = None
                 ) -> bytes:
@@ -208,11 +209,12 @@ class TemplatingClient:
         :param template_id: the template id
         :param compose_data: dict to compose template with
         :param mime_type: MIME type for the example
+        :param page: The number of the page to be printed
         :param resize_width: The height for resizing the template
         :param resize_height: The width for resizing the template
         """
         headers = {**self.json_header, **{"accept": mime_type}}
-        query_params = RequestDict(height=resize_height, width=resize_width)
+        query_params = RequestDict(page=page, height=resize_height, width=resize_width)
         response = requests.post(f"{self.templating_server_url}/template/{template_id}/compose",
                                  headers=headers,
                                  json=compose_data,
@@ -227,17 +229,19 @@ class TemplatingClient:
     @catch_connection_error
     def template_example(self, template_id: str,
                          mime_type="application/pdf",
+                         page: Optional[int] = None,
                          resize_height: Optional[int] = None,
                          resize_width: Optional[int] = None) -> bytes:
         """
         Makes a request for the template to be composed and returns the bytes for the file
         :param template_id: the template id
         :param mime_type: MIME type for the example
+        :param page: The number of the page to be printed
         :param resize_width: The height for resizing the template
         :param resize_height: The width for resizing the template
         """
         headers = {**self.header, **{"accept": mime_type}}
-        query_params = RequestDict(height=resize_height, width=resize_width)
+        query_params = RequestDict(page=page, height=resize_height, width=resize_width)
 
         response = requests.get(f"{self.templating_server_url}/template/{template_id}/example",
                                 headers=headers,
