@@ -1,10 +1,11 @@
-import io
 import time
 from functools import wraps
 from http import HTTPStatus
-from typing import NamedTuple, Sequence, Dict, List, IO
+from typing import NamedTuple, Sequence, Dict, List, Optional
 
 import requests
+
+from templating_client_py.request_collections import RequestDict
 
 
 class AuthenticationError(Exception):
@@ -196,30 +197,72 @@ class TemplatingClient:
         return template
 
     @catch_connection_error
-    def compose(self, template_id: str, compose_data: dict) -> bytes:
+    def compose(self, template_id: str,
+                compose_data: dict,
+                mime_type="application/pdf",
+                page: Optional[int] = None,
+                resize_height: Optional[int] = None,
+                resize_width: Optional[int] = None
+                ) -> bytes:
         """
         Makes a request for the template to be composed and returns the bytes for the file
         :param template_id: the template id
         :param compose_data: dict to compose template with
+        :param mime_type: MIME type for the example
+        :param page: The number of the page to be printed
+        :param resize_width: The height for resizing the template
+        :param resize_height: The width for resizing the template
         """
+        headers = {**self.json_header, **{"accept": mime_type}}
+        query_params = RequestDict(page=page, height=resize_height, width=resize_width)
         response = requests.post(f"{self.templating_server_url}/template/{template_id}/compose",
-                                 headers=self.json_header,
-                                 json=compose_data
+                                 headers=headers,
+                                 json=compose_data,
+                                 params=query_params
                                  )
 
-        if response.status_code != HTTPStatus.CREATED:
+        if response.status_code != HTTPStatus.OK:
             raise TemplatingError(response.status_code, response.text)
 
         return response.content
 
-    def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str):
+    @catch_connection_error
+    def template_example(self, template_id: str,
+                         mime_type="application/pdf",
+                         page: Optional[int] = None,
+                         resize_height: Optional[int] = None,
+                         resize_width: Optional[int] = None) -> bytes:
+        """
+        Makes a request for the template to be composed and returns the bytes for the file
+        :param template_id: the template id
+        :param mime_type: MIME type for the example
+        :param page: The number of the page to be printed
+        :param resize_width: The height for resizing the template
+        :param resize_height: The width for resizing the template
+        """
+        headers = {**self.header, **{"accept": mime_type}}
+        query_params = RequestDict(page=page, height=resize_height, width=resize_width)
+
+        response = requests.get(f"{self.templating_server_url}/template/{template_id}/example",
+                                headers=headers,
+                                params=query_params
+                                )
+
+        if response.status_code != HTTPStatus.OK:
+            raise TemplatingError(response.status_code, response.text)
+
+        return response.content
+
+    def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str, *args, **kwargs):
         """
         Makes a request for the template to be composed and writes the result to a file.
-        :param template_id:
-        :param compose_data:
-        :param composed_file_target:
+        :param template_id: the template id
+        :param compose_data: dict to compose template with
+        :param composed_file_target: path to file to be written. Caution: file is overwritten
+        :param args: extra arguments to send to compose
+        :param kwargs: extra keyword arguments to send to compose
         """
-        composed_content = self.compose(template_id, compose_data)
+        composed_content = self.compose(template_id, compose_data, *args, **kwargs)
 
         with open(composed_file_target, mode='wb') as output:
             output.write(composed_content)
