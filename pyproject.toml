@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "templating-client-py"
-version = "0.3.0"
+version = "1.0.0"
 description = "Client for templating microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com"]
 
