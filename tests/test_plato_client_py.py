@@ -1,4 +1,4 @@
-from templating_client_py import __version__
+from plato_client_py import __version__
 
 
 def test_version():

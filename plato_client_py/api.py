@@ -4,17 +4,17 @@ from typing import NamedTuple, Sequence, List, Optional
 
 import requests
 
-from templating_client_py.request_collections import RequestDict
+from plato_client_py.request_collections import RequestDict
 
 
-class TemplatingUnavailable(Exception):
+class PlatoUnavailable(Exception):
     """
     Error to be raised when the API is unavailable.
     """
     ...
 
 
-class TemplatingError(Exception):
+class PlatoError(Exception):
     """
     Error to be raised when the API responds but not as expected.
     """
@@ -23,7 +23,7 @@ class TemplatingError(Exception):
 
 def catch_connection_error(f):
     """
-    Simple decorator to catch when the connection for templating service fails and raises a TemplatingUnavailable.
+    Simple decorator to catch when the connection for Plato templating service fails and raises a PlatoUnavailable.
     """
 
     @wraps(f)
@@ -31,7 +31,7 @@ def catch_connection_error(f):
         try:
             return f(*args, **kwargs)
         except ConnectionError as e:
-            raise TemplatingUnavailable(e)
+            raise PlatoUnavailable(e)
 
     return wrapper
 
@@ -65,19 +65,19 @@ class TemplateInfo(NamedTuple):
     tags: List[str]
 
 
-class TemplatingClient:
+class PlatoClient:
     """
-    Templating client for the Vizidox templating microservice.
+    Plato client for the Vizidox templating microservice.
 
     Attributes:
-        templating_host: The docker host for the templating microservice.
+        plato_host: The docker host for the plato microservice.
     """
 
     def __init__(
             self,
-            templating_host: str
+            plato_host: str
     ):
-        self.templating_host = templating_host
+        self.plato_host = plato_host
 
     @catch_connection_error
     def templates(self, tags: List[str]) -> Sequence[TemplateInfo]:
@@ -92,12 +92,12 @@ class TemplatingClient:
         if tags:
             params["tags"] = tags
 
-        response = requests.get(f"{self.templating_host}/templates/",
+        response = requests.get(f"{self.plato_host}/templates/",
                                 params=params
                                 )
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         templates = [TemplateInfo(**template_dict) for template_dict in response.json()]
 
@@ -110,10 +110,10 @@ class TemplatingClient:
         :param template_id: the template id
         :return: TemplateInfo on the template
         """
-        response = requests.get(f"{self.templating_host}/templates/{template_id}")
+        response = requests.get(f"{self.plato_host}/templates/{template_id}")
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         template = TemplateInfo(**response.json())
 
@@ -138,14 +138,14 @@ class TemplatingClient:
         """
         headers = {**{"accept": mime_type}}
         query_params = RequestDict(page=page, height=resize_height, width=resize_width)
-        response = requests.post(f"{self.templating_host}/template/{template_id}/compose",
+        response = requests.post(f"{self.plato_host}/template/{template_id}/compose",
                                  headers=headers,
                                  json=compose_data,
                                  params=query_params
                                  )
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         return response.content
 
@@ -166,13 +166,13 @@ class TemplatingClient:
         headers = {**{"accept": mime_type}}
         query_params = RequestDict(page=page, height=resize_height, width=resize_width)
 
-        response = requests.get(f"{self.templating_host}/template/{template_id}/example",
+        response = requests.get(f"{self.plato_host}/template/{template_id}/example",
                                 headers=headers,
                                 params=query_params
                                 )
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         return response.content
 
