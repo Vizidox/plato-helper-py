@@ -1,28 +1,20 @@
-import time
 from functools import wraps
 from http import HTTPStatus
-from typing import NamedTuple, Sequence, Dict, List, Optional
+from typing import NamedTuple, Sequence, List, Optional
 
 import requests
 
-from templating_client_py.request_collections import RequestDict
+from plato_client_py.request_collections import RequestDict
 
 
-class AuthenticationError(Exception):
-    """
-    Error to be raised when something goes wrong with authentication.
-    """
-    ...
-
-
-class TemplatingUnavailable(Exception):
+class PlatoUnavailable(Exception):
     """
     Error to be raised when the API is unavailable.
     """
     ...
 
 
-class TemplatingError(Exception):
+class PlatoError(Exception):
     """
     Error to be raised when the API responds but not as expected.
     """
@@ -31,14 +23,16 @@ class TemplatingError(Exception):
 
 def catch_connection_error(f):
     """
-    Simple decorator to catch when the connection for templating service fails and raises a TemplatingUnavailable.
+    Simple decorator to catch when the connection for Plato templating service fails and raises a PlatoUnavailable.
     """
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
             return f(*args, **kwargs)
         except ConnectionError as e:
-            raise TemplatingUnavailable(e)
+            raise PlatoUnavailable(e)
+
     return wrapper
 
 
@@ -71,87 +65,19 @@ class TemplateInfo(NamedTuple):
     tags: List[str]
 
 
-class TemplatingClient:
+class PlatoClient:
     """
-    Templating client for the vizidox templating microservice.
-    Takes care of authentication and everything on the background.
+    Plato client for the Vizidox templating microservice.
 
     Attributes:
-        auth_server_url: The token endpoint where to request the token for templating access
-        auth_scope: The OAUTH2 scope to include in the auth request to get access to the API
-        auth_id: Your client id
-        auth_secret: Your client secret
-        templating_server_url: The url for the templating microservice.
+        plato_host: The docker host for the plato microservice.
     """
+
     def __init__(
             self,
-            auth_server_url: str,
-            auth_scope: str,
-            auth_id: str,
-            auth_secret: str,
-            templating_server_url: str
+            plato_host: str
     ):
-        self.auth_id = auth_id
-        self.auth_secret = auth_secret
-        self.auth_scope = auth_scope
-        self.auth_server_url = auth_server_url
-        self.templating_server_url = templating_server_url
-        self._token = None
-        self._token_expiration_date = None
-
-    @property
-    def token(self) -> str:
-        """
-        The current JWT token for API access.
-        On access it checks if the previous one expired and renews it automatically if so.
-        :return: the JWT token
-        """
-        if self._token is None or time.time() > self._token_expiration_date:
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
-
-            payload = {
-                "client_id": self.auth_id,
-                "client_secret": self.auth_secret,
-                "grant_type": "client_credentials",
-                "scope": self.auth_scope
-            }
-
-            response = requests.post(self.auth_server_url,
-                                     headers=headers,
-                                     data=payload)
-
-            if response.status_code != HTTPStatus.OK:
-                raise AuthenticationError(response.status_code, response.text)
-
-            json_response = response.json()
-            self._token = str(json_response['access_token'])
-            self._token_expiration_date = time.time() + int(json_response['expires_in'])
-
-        return self._token
-
-    @property
-    def header(self) -> Dict[str, str]:
-        """
-        Authorization header to be used in API requests. Accesses self.token which may renew the token if needed.
-        :return: header dict with 'Authorization' entry set with token.
-        """
-        header = {
-            "Authorization": f"Bearer {self.token}",
-        }
-        return header
-
-    @property
-    def json_header(self) -> Dict[str, str]:
-        """
-        Authorization header to be used in API requests. Accesses self.token which may renew the token if needed.
-        Also sets json header in request.
-        :return: header dict with 'Authorization' and 'Content-type' entry set.
-        """
-        header = self.header
-        header["Content-Type"] = "application/json"
-        return header
+        self.plato_host = plato_host
 
     @catch_connection_error
     def templates(self, tags: List[str]) -> Sequence[TemplateInfo]:
@@ -166,13 +92,12 @@ class TemplatingClient:
         if tags:
             params["tags"] = tags
 
-        response = requests.get(f"{self.templating_server_url}/templates/",
-                                headers=self.header,
+        response = requests.get(f"{self.plato_host}/templates/",
                                 params=params
                                 )
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         templates = [TemplateInfo(**template_dict) for template_dict in response.json()]
 
@@ -185,12 +110,10 @@ class TemplatingClient:
         :param template_id: the template id
         :return: TemplateInfo on the template
         """
-        response = requests.get(f"{self.templating_server_url}/templates/{template_id}",
-                                headers=self.header
-                                )
+        response = requests.get(f"{self.plato_host}/templates/{template_id}")
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         template = TemplateInfo(**response.json())
 
@@ -213,16 +136,16 @@ class TemplatingClient:
         :param resize_width: The height for resizing the template
         :param resize_height: The width for resizing the template
         """
-        headers = {**self.json_header, **{"accept": mime_type}}
+        headers = {**{"accept": mime_type}}
         query_params = RequestDict(page=page, height=resize_height, width=resize_width)
-        response = requests.post(f"{self.templating_server_url}/template/{template_id}/compose",
+        response = requests.post(f"{self.plato_host}/template/{template_id}/compose",
                                  headers=headers,
                                  json=compose_data,
                                  params=query_params
                                  )
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         return response.content
 
@@ -240,16 +163,16 @@ class TemplatingClient:
         :param resize_width: The height for resizing the template
         :param resize_height: The width for resizing the template
         """
-        headers = {**self.header, **{"accept": mime_type}}
+        headers = {**{"accept": mime_type}}
         query_params = RequestDict(page=page, height=resize_height, width=resize_width)
 
-        response = requests.get(f"{self.templating_server_url}/template/{template_id}/example",
+        response = requests.get(f"{self.plato_host}/template/{template_id}/example",
                                 headers=headers,
                                 params=query_params
                                 )
 
         if response.status_code != HTTPStatus.OK:
-            raise TemplatingError(response.status_code, response.text)
+            raise PlatoError(response.status_code, response.text)
 
         return response.content
 

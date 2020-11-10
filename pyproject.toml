@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "templating-client-py"
-version = "0.3.0"
-description = "Client for templating microservice"
+name = "plato-client-py"
+version = "1.0.0"
+description = "Client for Plato microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com"]
 
 [tool.poetry.dependencies]
