@@ -26,7 +26,7 @@ pipeline {
         }
         stage('Push to Nexus and remove the container') {
             steps {
-                sh "docker run ${docker_image_tag} /bin/bash -c \"poetry config repositories.morphotech ${nexus_url}; poetry config http-basic.morphotech ${env.nexus_account} ${env.nexus_password}; poetry build; poetry publish -r morphotech\""
+                sh "docker run --rm ${docker_image_tag} /bin/bash -c \"poetry config repositories.morphotech ${nexus_url}; poetry config http-basic.morphotech ${env.nexus_account} ${env.nexus_password}; poetry build; poetry publish -r morphotech\""
             }
         }
         stage('Sonarqube code inspection') {
