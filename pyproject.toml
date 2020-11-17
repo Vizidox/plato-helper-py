@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plato-client-py"
-version = "1.0.0"
+version = "1.0.8"
 description = "Client for Plato microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com"]
 
