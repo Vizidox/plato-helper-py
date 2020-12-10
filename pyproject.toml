@@ -2,7 +2,7 @@
 name = "plato-client-py"
 version = "1.0.0"
 description = "Client for Plato microservice"
-authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com"]
+authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>", "Le Hong Hieu <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -10,8 +10,7 @@ python = "^3.7"
 requests="2.22.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.0"
-
+pytest-cov = "^2.10.1"
 [build-system]
 requires = ["poetry>=1.0"]
 build-backend = "poetry.masonry.api"
