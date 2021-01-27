@@ -2,6 +2,7 @@ from functools import wraps
 from http import HTTPStatus
 from typing import NamedTuple, Sequence, List, Optional
 
+import json
 import requests
 
 from plato_client_py.request_collections import RequestDict
@@ -176,6 +177,54 @@ class PlatoClient:
 
         return response.content
 
+    @catch_connection_error
+    def create_template(self, file_stream: BinaryIO, template_details: dict) -> TemplateInfo:
+        """
+        Creates new template
+        :param file_stream: the file stream
+        :param template_details: the template details
+        :return: TemplateInfo of the new template
+        """
+        file_stream.seek(0)
+        template_details_str = json.dumps(template_details)
+
+        data = RequestDict(zipfile=file_stream, template_details=template_details_str)
+
+        response = requests.post(f"{self.plato_host}/template/create",
+                                data=data)
+
+        if response.status_code != HTTPStatus.OK:
+            raise PlatoError(response.status_code, response.text)
+
+        template = TemplateInfo(**response.json())
+
+        return template
+
+
+    @catch_connection_error
+    def update_template(self, template_id: str, file_stream: BinaryIO, template_details: dict) -> TemplateInfo:
+        """
+        Updates template by template id
+        :param template_id: the template id
+        :param file_stream: the file stream
+        :param template_details: the template details
+        :return: TemplateInfo of the updated template
+        """
+        file_stream.seek(0)
+
+        template_details_str = json.dumps(template_details)
+        data = RequestDict(zipfile=file_stream, template_details=template_details_str)
+
+        response = requests.put(f"{self.plato_host}/template/{template_id}/update",
+                                data=data)
+
+        if response.status_code != HTTPStatus.OK:
+            raise PlatoError(response.status_code, response.text)
+
+        template = TemplateInfo(**response.json())
+
+        return template
+
     def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str, *args, **kwargs):
         """
         Makes a request for the template to be composed and writes the result to a file.
@@ -189,3 +238,4 @@ class PlatoClient:
 
         with open(composed_file_target, mode='wb') as output:
             output.write(composed_content)
+
