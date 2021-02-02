@@ -225,6 +225,25 @@ class PlatoClient:
 
         return template
 
+    @catch_connection_error
+    def update_template_details(self, template_id: str, template_details: dict) -> TemplateInfo:
+        """
+        Updates template details by template id
+        :param template_id: the template id
+        :param template_details: the template details
+        :return: TemplateInfo of the updated template
+        """
+
+        response = requests.patch(f"{self.plato_host}/template/{template_id}/update_details",
+                                json=template_details)
+
+        if response.status_code != HTTPStatus.OK:
+            raise PlatoError(response.status_code, response.text)
+
+        template = TemplateInfo(**response.json())
+
+        return template
+
     def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str, *args, **kwargs):
         """
         Makes a request for the template to be composed and writes the result to a file.
