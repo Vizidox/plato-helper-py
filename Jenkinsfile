@@ -45,8 +45,7 @@ pipeline {
 
         stage ('Dependency Tracker Publisher') {
             steps {
-                sh "curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -"
-                sh "poetry add cyclonedx-bom"
+                sh "python3 create-bom.py"
                 dependencyTrackPublisher artifact: 'bom.xml', projectName: 'plato-client', projectVersion: "${docker_image_tag}", synchronous: true
             }
         }
