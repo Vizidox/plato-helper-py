@@ -1,8 +1,8 @@
+import json
 from functools import wraps
 from http import HTTPStatus
 from typing import NamedTuple, Sequence, List, Optional, BinaryIO
 
-import json
 import requests
 
 from plato_client_py.request_collections import RequestDict
