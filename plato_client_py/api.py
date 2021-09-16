@@ -1,6 +1,6 @@
 from functools import wraps
 from http import HTTPStatus
-from typing import NamedTuple, Sequence, List, Optional
+from typing import NamedTuple, Sequence, List, Optional, BinaryIO
 
 import json
 import requests
@@ -88,7 +88,7 @@ class PlatoClient:
         :return: Sequence[TemplateInfo] on all the templates available
         """
 
-        params = dict()
+        params = {}
 
         if tags:
             params["tags"] = tags
@@ -100,9 +100,7 @@ class PlatoClient:
         if response.status_code != HTTPStatus.OK:
             raise PlatoError(response.status_code, response.text)
 
-        templates = [TemplateInfo(**template_dict) for template_dict in response.json()]
-
-        return templates
+        return [TemplateInfo(**template_dict) for template_dict in response.json()]
 
     @catch_connection_error
     def template(self, template_id: str) -> TemplateInfo:
@@ -116,9 +114,7 @@ class PlatoClient:
         if response.status_code != HTTPStatus.OK:
             raise PlatoError(response.status_code, response.text)
 
-        template = TemplateInfo(**response.json())
-
-        return template
+        return TemplateInfo(**response.json())
 
     @catch_connection_error
     def compose(self, template_id: str,
@@ -190,16 +186,12 @@ class PlatoClient:
 
         data = RequestDict(zipfile=file_stream, template_details=template_details_str)
 
-        response = requests.post(f"{self.plato_host}/template/create",
-                                data=data)
+        response = requests.post(f"{self.plato_host}/template/create", data=data)
 
         if response.status_code != HTTPStatus.OK:
             raise PlatoError(response.status_code, response.text)
 
-        template = TemplateInfo(**response.json())
-
-        return template
-
+        return TemplateInfo(**response.json())
 
     @catch_connection_error
     def update_template(self, template_id: str, file_stream: BinaryIO, template_details: dict) -> TemplateInfo:
@@ -221,9 +213,7 @@ class PlatoClient:
         if response.status_code != HTTPStatus.OK:
             raise PlatoError(response.status_code, response.text)
 
-        template = TemplateInfo(**response.json())
-
-        return template
+        return TemplateInfo(**response.json())
 
     @catch_connection_error
     def update_template_details(self, template_id: str, template_details: dict) -> TemplateInfo:
@@ -240,9 +230,7 @@ class PlatoClient:
         if response.status_code != HTTPStatus.OK:
             raise PlatoError(response.status_code, response.text)
 
-        template = TemplateInfo(**response.json())
-
-        return template
+        return TemplateInfo(**response.json())
 
     def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str, *args, **kwargs):
         """
