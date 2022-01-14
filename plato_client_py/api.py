@@ -3,6 +3,7 @@ from functools import wraps
 from http import HTTPStatus
 from typing import NamedTuple, Sequence, List, Optional, BinaryIO
 
+import backoff
 import requests
 
 from plato_client_py.request_collections import RequestDict
@@ -24,16 +25,26 @@ class PlatoError(Exception):
 
 def catch_connection_error(f):
     """
-    Simple decorator to catch when the connection for Plato templating service fails and raises a PlatoUnavailable.
-    """
+    Decorator to catch when the connection for Plato templating service fails and raises a PlatoUnavailable.
 
+    The call_plato method allows the use of the backoff decorator to retry the plato call several times when a
+    Connection Error occurs.
+
+    It is assumed that we are decorating a method of the PlatoClient class, which contains the max_tries field to
+    determine the maximum numer of attempts to resend requests. Since the first argument is always the PlatoClient
+    instance (self), we can safely access the max_tries field directly.
+    """
     @wraps(f)
-    def wrapper(*args, **kwargs):
+    def wrapper(plato_client, *args, **kwargs):
+
+        @backoff.on_exception(wait_gen=backoff.expo, exception=ConnectionError, max_tries=plato_client.max_tries)
+        def call_plato_method():
+            return f(plato_client, *args, **kwargs)
+
         try:
-            return f(*args, **kwargs)
+            return call_plato_method()
         except ConnectionError as e:
             raise PlatoUnavailable(e)
-
     return wrapper
 
 
@@ -74,11 +85,9 @@ class PlatoClient:
         plato_host: The docker host for the plato microservice.
     """
 
-    def __init__(
-            self,
-            plato_host: str
-    ):
+    def __init__(self, plato_host: str, max_tries: int = 3):
         self.plato_host = plato_host
+        self.max_tries = max_tries
 
     @catch_connection_error
     def templates(self, tags: List[str]) -> Sequence[TemplateInfo]:
