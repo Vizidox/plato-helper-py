@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plato-client-py"
-version = "1.0.0"
+version = "1.2.0"
 description = "Client for Plato microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>", "Le Hong Hieu <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
 
@@ -8,6 +8,7 @@ authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.tei
 python = "^3.7"
 
 requests="2.22.0"
+backoff="1.11.1"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^2.10.1"

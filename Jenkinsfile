@@ -24,11 +24,13 @@ pipeline {
                 }
             }
         }
+
         stage('Push to Nexus and remove the container') {
             steps {
                 sh "docker run --rm ${docker_image_tag} /bin/bash -c \"poetry config repositories.morphotech ${nexus_url}; poetry config http-basic.morphotech ${env.nexus_account} ${env.nexus_password}; poetry build; poetry publish -r morphotech\""
             }
         }
+
         stage('Sonarqube code inspection') {
             steps {
                 sh "docker run --rm -e SONAR_HOST_URL=\"${sonar_url}\" -v \"${WORKSPACE}:/usr/src\"  sonarsource/sonar-scanner-cli:4.4 -X \
@@ -38,6 +40,13 @@ pipeline {
                 -Dsonar.python.coverage.reportPaths=coverage/coverage.xml\
                 -Dsonar.python.xunit.reportPath=coverage/pytest-report.xml\
                 -Dsonar.projectBaseDir=${sonar_analyzed_dir}"
+            }
+        }
+
+        stage ('Dependency Tracker Publisher') {
+            steps {
+                sh "python3 create-bom.py"
+                dependencyTrackPublisher artifact: 'bom.xml', projectName: 'plato-client', projectVersion: "${docker_image_tag}", synchronous: true
             }
         }
     }

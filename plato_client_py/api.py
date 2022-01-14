@@ -1,7 +1,9 @@
+import json
 from functools import wraps
 from http import HTTPStatus
-from typing import NamedTuple, Sequence, List, Optional
+from typing import NamedTuple, Sequence, List, Optional, BinaryIO
 
+import backoff
 import requests
 
 from plato_client_py.request_collections import RequestDict
@@ -23,16 +25,26 @@ class PlatoError(Exception):
 
 def catch_connection_error(f):
     """
-    Simple decorator to catch when the connection for Plato templating service fails and raises a PlatoUnavailable.
-    """
+    Decorator to catch when the connection for Plato templating service fails and raises a PlatoUnavailable.
 
+    The call_plato method allows the use of the backoff decorator to retry the plato call several times when a
+    Connection Error occurs.
+
+    It is assumed that we are decorating a method of the PlatoClient class, which contains the max_tries field to
+    determine the maximum numer of attempts to resend requests. Since the first argument is always the PlatoClient
+    instance (self), we can safely access the max_tries field directly.
+    """
     @wraps(f)
-    def wrapper(*args, **kwargs):
+    def wrapper(plato_client, *args, **kwargs):
+
+        @backoff.on_exception(wait_gen=backoff.expo, exception=ConnectionError, max_tries=plato_client.max_tries)
+        def call_plato_method():
+            return f(plato_client, *args, **kwargs)
+
         try:
-            return f(*args, **kwargs)
+            return call_plato_method()
         except ConnectionError as e:
             raise PlatoUnavailable(e)
-
     return wrapper
 
 
@@ -73,11 +85,9 @@ class PlatoClient:
         plato_host: The docker host for the plato microservice.
     """
 
-    def __init__(
-            self,
-            plato_host: str
-    ):
+    def __init__(self, plato_host: str, max_tries: int = 3):
         self.plato_host = plato_host
+        self.max_tries = max_tries
 
     @catch_connection_error
     def templates(self, tags: List[str]) -> Sequence[TemplateInfo]:
@@ -87,7 +97,7 @@ class PlatoClient:
         :return: Sequence[TemplateInfo] on all the templates available
         """
 
-        params = dict()
+        params = {}
 
         if tags:
             params["tags"] = tags
@@ -99,9 +109,7 @@ class PlatoClient:
         if response.status_code != HTTPStatus.OK:
             raise PlatoError(response.status_code, response.text)
 
-        templates = [TemplateInfo(**template_dict) for template_dict in response.json()]
-
-        return templates
+        return [TemplateInfo(**template_dict) for template_dict in response.json()]
 
     @catch_connection_error
     def template(self, template_id: str) -> TemplateInfo:
@@ -115,9 +123,7 @@ class PlatoClient:
         if response.status_code != HTTPStatus.OK:
             raise PlatoError(response.status_code, response.text)
 
-        template = TemplateInfo(**response.json())
-
-        return template
+        return TemplateInfo(**response.json())
 
     @catch_connection_error
     def compose(self, template_id: str,
@@ -176,6 +182,65 @@ class PlatoClient:
 
         return response.content
 
+    @catch_connection_error
+    def create_template(self, file_stream: BinaryIO, template_details: dict) -> TemplateInfo:
+        """
+        Creates new template
+        :param file_stream: the file stream
+        :param template_details: the template details
+        :return: TemplateInfo of the new template
+        """
+        file_stream.seek(0)
+        template_details_str = json.dumps(template_details)
+
+        data = RequestDict(zipfile=file_stream, template_details=template_details_str)
+
+        response = requests.post(f"{self.plato_host}/template/create", data=data)
+
+        if response.status_code != HTTPStatus.OK:
+            raise PlatoError(response.status_code, response.text)
+
+        return TemplateInfo(**response.json())
+
+    @catch_connection_error
+    def update_template(self, template_id: str, file_stream: BinaryIO, template_details: dict) -> TemplateInfo:
+        """
+        Updates template by template id
+        :param template_id: the template id
+        :param file_stream: the file stream
+        :param template_details: the template details
+        :return: TemplateInfo of the updated template
+        """
+        file_stream.seek(0)
+
+        template_details_str = json.dumps(template_details)
+        data = RequestDict(zipfile=file_stream, template_details=template_details_str)
+
+        response = requests.put(f"{self.plato_host}/template/{template_id}/update",
+                                data=data)
+
+        if response.status_code != HTTPStatus.OK:
+            raise PlatoError(response.status_code, response.text)
+
+        return TemplateInfo(**response.json())
+
+    @catch_connection_error
+    def update_template_details(self, template_id: str, template_details: dict) -> TemplateInfo:
+        """
+        Updates template details by template id
+        :param template_id: the template id
+        :param template_details: the template details
+        :return: TemplateInfo of the updated template
+        """
+
+        response = requests.patch(f"{self.plato_host}/template/{template_id}/update_details",
+                                json=template_details)
+
+        if response.status_code != HTTPStatus.OK:
+            raise PlatoError(response.status_code, response.text)
+
+        return TemplateInfo(**response.json())
+
     def compose_to_file(self, template_id: str, compose_data: dict, composed_file_target: str, *args, **kwargs):
         """
         Makes a request for the template to be composed and writes the result to a file.
@@ -189,3 +254,4 @@ class PlatoClient:
 
         with open(composed_file_target, mode='wb') as output:
             output.write(composed_content)
+
