@@ -83,6 +83,7 @@ class PlatoClient:
 
     Attributes:
         plato_host: The docker host for the plato microservice.
+        max_tries: Number of retries the client attempts when a ConnectionError is raised
     """
 
     def __init__(self, plato_host: str, max_tries: int = 3):
