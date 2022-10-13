@@ -1,0 +1,7 @@
+version: "3.3"
+services:
+  plato-client:
+    build: .
+    command: bash -c "tox -p"
+    volumes:
+      - ./plato_client_py/coverage:/usr/src/plato_client_py/coverage

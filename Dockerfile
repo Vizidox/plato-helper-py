@@ -1,9 +1,11 @@
-FROM python:3.7
+FROM fkrull/multi-python:focal
 
-COPY . .
+COPY . /usr/src
+WORKDIR /usr/src
 
-RUN curl https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py --output get-poetry.py
-RUN python get-poetry.py --version 1.0.2
-ENV PATH=/root/.poetry/bin:$PATH
+ENV PATH=/root/.local/bin:$PATH
+RUN curl -sSL https://install.python-poetry.org | python3 -
+RUN poetry self update 1.1.12
 RUN poetry config virtualenvs.create false
+RUN python3 -m pip install --upgrade pip==22.0.4
 RUN poetry install -vvv
