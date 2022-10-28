@@ -1,4 +1,3 @@
-nexus_url = 'https://nexus.morphotech.co.uk/repository/pypi-hosted/'
 sonar_url = 'https://sonar.morphotech.co.uk'
 sonar_project_key = 'plato-client'
 sonar_analyzed_dir = 'plato_client_py'
@@ -38,11 +37,11 @@ pipeline {
                 }
             }
         }
-        stage('Push to Nexus') {
-             steps {
-                 sh "docker-compose run plato-client /bin/bash -c \"poetry config repositories.morphotech ${nexus_url}; poetry config http-basic.morphotech ${env.nexus_account} ${env.nexus_password}; poetry build; poetry publish -r morphotech\""
-             }
-         }
+        stage('Push to PyPi') {
+            steps {
+                sh "docker-compose run plato-client /bin/bash -c \"poetry config pypi-token.pypi ${pypi_token}; poetry build; poetry publish\""
+            }
+        }
         stage ('Dependency Tracker Publisher') {
             steps {
                 sh "python3 create-bom.py"
