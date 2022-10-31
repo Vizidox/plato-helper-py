@@ -1,7 +1,14 @@
 version: "3.3"
 services:
-  plato-client:
+  plato-helper:
     build: .
     command: bash -c "tox -p"
     volumes:
-      - ./plato_client_py/coverage:/usr/src/plato_client_py/coverage
+      - ./plato_helper_py/coverage:/usr/src/plato_helper_py/coverage
+      - ./bom.xml:/usr/src/bom.xml
+
+  plato-helper-bom:
+    build: .
+    command: bash -c "poetry run cyclonedx-py -e -o bom/bom.xml"
+    volumes:
+      - ./bom:/usr/src/bom

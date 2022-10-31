@@ -1,14 +1,14 @@
 [tool.poetry]
-name = "plato-client-py"
-version = "1.2.2"
-description = "Client for Plato microservice"
+name = "plato-helper-py"
+version = "2.0.0"
+description = "Helper for the Plato microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>", "Le Hong Hieu <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
 
 [tool.poetry.dependencies]
 python = ">=3.7.2,<3.10"
 
 requests="^2.27"
-backoff="^2.1"
+backoff="^2.2"
 types-requests = "^2.28.11"
 
 [tool.poetry.dev-dependencies]
@@ -21,6 +21,7 @@ typing-extensions="^4.3"
 pylint = "^2.15"
 coverage = "^6.4"
 tox = "^3.25"
+cyclonedx-bom="^3.6"
 
 [build-system]
 requires = ["poetry>=1.0"]

@@ -1,4 +1,4 @@
-from plato_client_py.api import TemplateInfo
+from plato_helper_py.api import TemplateInfo
 
 ranger_certificate_template = TemplateInfo(template_id="ranger_certificate",
                                            template_schema={

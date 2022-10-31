@@ -131,4 +131,6 @@ dmypy.json
 data/
 
 .idea
-/plato_client_py/coverage/
+context_logging_py/coverage/
+.coverage
+bom
