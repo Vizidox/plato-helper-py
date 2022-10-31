@@ -6,7 +6,7 @@ from typing import NamedTuple, Sequence, List, Optional, BinaryIO, Callable, Typ
 import backoff
 import requests
 
-from plato_client_py.request_collections import RequestDict
+from plato_helper_py.request_collections import RequestDict
 
 DEFAULT_TIMEOUT = 10
 
@@ -32,8 +32,8 @@ def catch_connection_error(f: F) -> F:
     The call_plato method allows the use of the backoff decorator to retry the plato call several times when a
     Connection Error occurs.
 
-    It is assumed that we are decorating a method of the PlatoClient class, which contains the max_tries field to
-    determine the maximum numer of attempts to resend requests. Since the first argument is always the PlatoClient
+    It is assumed that we are decorating a method of the PlatoHelper class, which contains the max_tries field to
+    determine the maximum numer of attempts to resend requests. Since the first argument is always the PlatoHelper
     instance (self), we can safely access the max_tries field directly.
 
     :param f: decorated function
@@ -43,12 +43,12 @@ def catch_connection_error(f: F) -> F:
     :rtype: F
     """
     @wraps(f)
-    def wrapper(plato_client: Any, *args: Any, **kwargs: Any) -> Any:
+    def wrapper(plato_helper: Any, *args: Any, **kwargs: Any) -> Any:
         """
         Wrapper function for the decorator.
 
-        :param plato_client: The Plato Client instance
-        :type plato_client: Any
+        :param plato_helper: The Plato Helper instance
+        :type plato_helper: Any
 
         :param args: The arguments of the function
         :type args: List[Any]
@@ -60,15 +60,15 @@ def catch_connection_error(f: F) -> F:
         :rtype: Any
         """
 
-        @backoff.on_exception(wait_gen=backoff.expo, exception=ConnectionError, max_tries=plato_client.max_tries)
+        @backoff.on_exception(wait_gen=backoff.expo, exception=ConnectionError, max_tries=plato_helper.max_tries)
         def call_plato_method() -> Any:
             """
-            Call the decorated method, which is assumed to be a method of the PlatoClient class.
+            Call the decorated method, which is assumed to be a method of the PlatoHelper class.
 
             :return: The function return
             :rtype: Any
             """
-            return f(plato_client, *args, **kwargs)
+            return f(plato_helper, *args, **kwargs)
 
         try:
             return call_plato_method()
@@ -106,13 +106,13 @@ class TemplateInfo(NamedTuple):
     tags: List[str]
 
 
-class PlatoClient:
+class PlatoHelper:
     """
-    Plato client for the Vizidox templating microservice.
+    Plato helper for Plato
 
     Attributes:
         plato_host: The host for the Plato microservice
-        max_tries: Number of retries the client attempts when a ConnectionError is raised
+        max_tries: Number of retries the helper attempts when a ConnectionError is raised
     """
 
     def __init__(self, plato_host: str, max_tries: int = 3):

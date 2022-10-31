@@ -1,7 +1,7 @@
 sonar_url = 'https://sonar.morphotech.co.uk'
-sonar_project_key = 'plato-client'
-sonar_analyzed_dir = 'plato_client_py'
-docker_image_tag = "plato-client"
+sonar_project_key = 'plato-helper-py'
+sonar_analyzed_dir = 'plato_helper_py'
+docker_image_tag = "plato-helper-py"
 
 pipeline {
     agent {
@@ -17,7 +17,7 @@ pipeline {
             steps{
                 script{
                     if(!params.get('skipTests', false)) {
-                        sh "docker-compose run --rm plato-client"
+                        sh "docker-compose run --rm plato-helper-py"
                     }
                 }
             }
@@ -39,13 +39,13 @@ pipeline {
         }
         stage('Push to PyPi') {
             steps {
-                sh "docker-compose run plato-client /bin/bash -c \"poetry config pypi-token.pypi ${pypi_token}; poetry build; poetry publish\""
+                sh "docker-compose run plato-helper-py /bin/bash -c \"poetry config pypi-token.pypi ${pypi_token}; poetry build; poetry publish\""
             }
         }
         stage ('Dependency Tracker Publisher') {
             steps {
                 sh "python3 create-bom.py"
-                dependencyTrackPublisher artifact: 'bom.xml', projectName: 'plato-client', projectVersion: "${docker_image_tag}", synchronous: true
+                dependencyTrackPublisher artifact: 'bom.xml', projectName: 'plato-helper-py', projectVersion: "${docker_image_tag}", synchronous: true
             }
         }
     }
