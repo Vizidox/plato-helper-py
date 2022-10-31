@@ -131,3 +131,6 @@ dmypy.json
 data/
 
 .idea
+context_logging_py/coverage/
+.coverage
+bom
