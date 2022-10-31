@@ -21,6 +21,7 @@ typing-extensions="^4.3"
 pylint = "^2.15"
 coverage = "^6.4"
 tox = "^3.25"
+cyclonedx-bom="^3.6"
 
 [build-system]
 requires = ["poetry>=1.0"]

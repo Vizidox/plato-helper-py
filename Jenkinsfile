@@ -16,7 +16,7 @@ pipeline {
             steps{
                 script{
                     if(!params.get('skipTests', false)) {
-                        sh "docker-compose run --rm plato-helper-py"
+                        sh "docker-compose run --rm plato-helper"
                     }
                 }
             }
@@ -36,23 +36,23 @@ pipeline {
                 }
             }
         }
-//         stage('Push to PyPi') {
-//             steps {
-//                 sh "docker-compose run plato-helper-py /bin/bash -c \"poetry config pypi-token.pypi ${pypi_token}; poetry build; poetry publish\""
-//             }
-//         }
+        stage('Push to PyPi') {
+            steps {
+                sh "docker-compose run plato-helper-py /bin/bash -c \"poetry config pypi-token.pypi ${pypi_token}; poetry build; poetry publish\""
+            }
+        }
         stage('Get project version') {
             steps {
                 script {
-                    project_version = sh(script: 'docker-compose run --rm plato-helper-py poetry version', returnStdout: true).trim().split(' ')[-1]
+                    project_version = sh(script: 'docker-compose run --rm plato-helper poetry version', returnStdout: true).trim().split(' ')[-1]
                 }
                 sh "echo 'current project version: ${project_version}'"
             }
         }
         stage ('Dependency Tracker Publisher') {
             steps {
-                sh "python3 create-bom.py"
-                dependencyTrackPublisher artifact: 'bom.xml', projectName: 'plato-helper-py', projectVersion: "${project_version}", synchronous: true
+                sh "docker-compose run --rm plato-helper-bom"
+                dependencyTrackPublisher artifact: 'bom/bom.xml', projectName: 'plato-helper-py', projectVersion: "${project_version}", synchronous: true
             }
         }
     }
