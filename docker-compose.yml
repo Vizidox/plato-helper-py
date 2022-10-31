@@ -4,4 +4,4 @@ services:
     build: .
     command: bash -c "tox -p"
     volumes:
-      - ./plato_helper_py/coverage:/usr/src/plato_helper_py/coverage
+      - ./coverage:/usr/src/plato_helper_py/coverage
