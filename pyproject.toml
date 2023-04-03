@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plato-helper-py"
-version = "2.0.0"
+version = "2.1.0"
 description = "Helper for the Plato microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>", "Le Hong Hieu <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
 
