@@ -38,7 +38,7 @@ pipeline {
         }
         stage('Push to PyPi') {
             steps {
-                sh "docker-compose run plato-helper-py /bin/bash -c \"poetry config pypi-token.pypi ${pypi_token}; poetry build; poetry publish\""
+                sh "docker-compose run plato-helper /bin/bash -c \"poetry config pypi-token.pypi ${pypi_token}; poetry build; poetry publish\""
             }
         }
         stage('Get project version') {
