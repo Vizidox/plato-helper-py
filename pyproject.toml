@@ -5,7 +5,7 @@ description = "Helper for the Plato microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>", "Le Hong Hieu <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7.2,<3.10"
+python = "^3.7.2"
 
 requests="^2.27"
 backoff="^2.2"
